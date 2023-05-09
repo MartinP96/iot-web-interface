@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "iot-web-interface"
+version = "0.1.0"
+description = "Web interface for IOT framework"
+authors = ["MartinP96 <porenta.martin@gmail.com>"]
+readme = "README.md"
+packages = [{include = "iot_web_interface"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+flask = "^2.3.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
