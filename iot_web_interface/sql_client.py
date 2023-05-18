@@ -64,14 +64,19 @@ class MySqlClient(ISqlClient):
         myresult = cursor.fetchall()
         return myresult
 
-    def execute_stored_procedure(self, stored_procedure: str, input_args=()):
+    def execute_stored_procedure(self, stored_procedure: str, input_args=(), return_dict: bool = False):
         data = []
         try:
             cursor = self.connection.cursor(dictionary=True)
             cursor.callproc(stored_procedure, input_args)
             self.connection.commit()
+            headers = ()
             for result in cursor.stored_results():
                 data = result.fetchall()
+                headers = result.column_names
+
+            if return_dict:
+                data = [dict(zip(headers, data)) for data in data]
 
         except mysql.connector.Error as error:
             print(f"Failed to execute stored procedure: {error}")
