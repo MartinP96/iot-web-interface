@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, request
+from flask import jsonify
 from iot_web_interface import sql_client
 import csv
 
@@ -35,12 +36,46 @@ if __name__ == '__main__':
 
     @app.route('/device_list')
     def get_device_list():
-        data = client.execute_stored_procedure("GetDeviceList")
-        return data
+        data = client.execute_stored_procedure("GetDeviceList", return_dict=False)
 
-    @app.route('/device_last_measurement')
-    def get_last_measurements_for_device():
-        data = client.execute_stored_procedure("GetLastMeasurementForDevice", (1,))
-        return data
+        data_dict = {}
+        for dev_tuple in data:
+            dev_dict = {
+                "device_id": dev_tuple[0],
+                "iot_configuration": dev_tuple[2]
+            }
+            data_dict[dev_tuple[1]] = dev_dict
+        resp = jsonify(data_dict)
+        return resp
+
+    @app.route('/device_last_measurement/<dev_id>')
+    def get_last_measurements_for_device(dev_id):
+        data = client.execute_stored_procedure("GetLastMeasurementForDevice", (int(dev_id),), return_dict=False)
+        measurements_dict = {}
+        for data_tuple in data:
+            measurement = {
+                "measurement_id": data_tuple[0],
+                "value": data_tuple[3],
+                "measurement_unit": data_tuple[4],
+                "insert_timestamp": data_tuple[5]
+            }
+            measurements_dict[data_tuple[2]] = measurement
+
+        resp = jsonify(measurements_dict)
+        return resp
+
+    @app.route('/device_measurements_interval/')
+    def device_measurements_interval():
+        args = request.args
+        data = client.execute_stored_procedure("GetMeasurementsOnInterval", (int(args['dev_id']),
+                                                                             int(args['measurement_type']),
+                                                                             args['interval_min'],
+                                                                             args['interval_max']), return_dict=True)
+        resp = jsonify(data)
+        return resp
+
+    # TMP Test POST
+    # args = request.args
 
     app.run(host="192.168.0.101")
+
