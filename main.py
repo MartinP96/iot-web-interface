@@ -22,11 +22,11 @@ if __name__ == '__main__':
 
     app = Flask(__name__)
 
-    @app.route('/')
+    @app.route('/', methods=['GET'])
     def index():
         return 'Hello!'
 
-    @app.route('/data')
+    @app.route('/data', methods=['GET'])
     def get_data():
         data = {
             'data': '123',
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         }
         return data
 
-    @app.route('/device_list')
+    @app.route('/device_list', methods=['GET'])
     def get_device_list():
         data = client.execute_stored_procedure("GetDeviceList", return_dict=False)
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         resp = jsonify(data_dict)
         return resp
 
-    @app.route('/device_last_measurement/<dev_id>')
+    @app.route('/device_last_measurement/<dev_id>', methods=['GET'])
     def get_last_measurements_for_device(dev_id):
         data = client.execute_stored_procedure("GetLastMeasurementForDevice", (int(dev_id),), return_dict=False)
         measurements_dict = {}
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         resp = jsonify(measurements_dict)
         return resp
 
-    @app.route('/device_measurements_interval/')
+    @app.route('/device_measurements_interval/', methods=['GET'])
     def device_measurements_interval():
         args = request.args
         data = client.execute_stored_procedure("GetMeasurementsOnInterval", (int(args['dev_id']),
@@ -74,8 +74,15 @@ if __name__ == '__main__':
         resp = jsonify(data)
         return resp
 
-    # TMP Test POST
-    # args = request.args
+    @app.route('/system_service_commands/', methods=['POST'])
+    def system_service_service():
+        args = request.args
 
+        if args['command'] == 'stop_service':
+            client.execute_stored_procedure("SystemServiceStop", return_dict=False)
+            return "Success", 200, {"Access-Control-Allow-Origin": "*"}
+        elif args['command'] == 'start_service':
+            client.execute_stored_procedure("SystemServiceStart", return_dict=False)
+            return "Success", 200, {"Access-Control-Allow-Origin": "*"}
+        return "Not found", 404, {"Access-Control-Allow-Origin": "*"}
     app.run(host="192.168.0.101")
-
